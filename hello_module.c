@@ -3,10 +3,13 @@
 #include <linux/init.h>
 #include <linux/kthread.h>
 #include <asm/delay.h>
+#include "mapfile.h"
 
 typedef struct argument {
 	int num;
 }argument;
+
+struct file *map_file;
 
 int jisu_thread(void *arg)
 {	
@@ -28,6 +31,11 @@ int jisu_thread(void *arg)
 
 int __init hello_module_init(void)
 {
+/*
+	*
+	* jisu thread
+	*
+	
 	argument arg[10];
 	int i = 0;
 
@@ -40,6 +48,22 @@ int __init hello_module_init(void)
 	}
 
 	udelay(3);
+*/
+	int offset = 0;
+	char jisu_string[5] = "jisu";
+	char test_string[10] = {0, };
+	unsigned long long jisu_num = 100;
+
+	map_file = (struct file *)file_open("testFile",O_RDWR|O_CREAT,S_IWUSR);
+	printk("file is opened");
+
+	sprintf(test_string,"%llu",jisu_num);
+
+	printk("ajs: before write offset : %d", offset);
+	//file_write(map_file,offset,jisu_string,5);
+	file_write(map_file,offset,test_string,10);
+	printk("ajs: after write offset : %d", offset);
+	
 	printk(KERN_EMERG "Hello Module~! I'm jisu \n");
 	return 0;
 }
@@ -47,6 +71,7 @@ int __init hello_module_init(void)
 void __exit hello_module_cleanup(void)
 {
 	printk("<0>Bye Module~!\n");
+	file_close(map_file);
 }
 
 module_init(hello_module_init);
