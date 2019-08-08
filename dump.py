@@ -36,8 +36,6 @@ with open('dump', mode='r') as f:
         block_list.append(block[0])
         block_list.append(block[1])
 
-    print(''.join(block_list))
-
 with open('result', mode='w') as f:
     f.write(''.join(block_list))
 
