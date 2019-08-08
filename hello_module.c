@@ -7,13 +7,13 @@
 
 typedef struct argument {
 	int num;
-}argument;
+}argument_t;
 
 struct file *map_file;
 
 int jisu_thread(void *arg)
 {	
-	argument* argu = (argument*)arg;
+	argument_t* argu = (argument_t*)arg;
 
 	printk("this thread is %d\n",argu->num);	
 	printk("this thread is %d\n",argu->num);	
@@ -29,14 +29,14 @@ int jisu_thread(void *arg)
 	return 0;
 }
 
-int __init hello_module_init(void)
+void thread_create(void)
 {
 /*
 	*
-	* jisu thread
+	* jisu thread create
 	*
-	
-	argument arg[10];
+*/
+	argument_t arg[10];
 	int i = 0;
 
 	for(i=0; i<10;i++){
@@ -48,22 +48,27 @@ int __init hello_module_init(void)
 	}
 
 	udelay(3);
-*/
+}
+
+void jisu_file_open(void)
+{
 	int offset = 0;
 	char jisu_string[5] = "jisu";
-	char test_string[10] = {0, };
 	unsigned long long jisu_num = 100;
 
 	map_file = (struct file *)file_open("testFile",O_RDWR|O_CREAT,S_IWUSR);
 	printk("file is opened");
 
-	sprintf(test_string,"%llu",jisu_num);
-
 	printk("ajs: before write offset : %d", offset);
-	//file_write(map_file,offset,jisu_string,5);
-	file_write(map_file,offset,test_string,10);
+	file_write(map_file,offset,jisu_string,5);
+	offset += 10;
 	printk("ajs: after write offset : %d", offset);
-	
+}
+
+int __init hello_module_init(void)
+{
+	//thread_create()
+	jisu_file_open();
 	printk(KERN_EMERG "Hello Module~! I'm jisu \n");
 	return 0;
 }
