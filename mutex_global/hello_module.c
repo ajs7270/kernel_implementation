@@ -5,16 +5,15 @@
 #include <linux/slab.h> // for kmalloc
 #include <linux/mutex.h> // for mutex 
 
-//global mutex initialie
+/* global mutex initialize */
 DEFINE_MUTEX(my_mutex);
 
 int test_thread(void *_arg)
 {	
 	int* arg = (int*)_arg;
 
-	// mutex lock & unlock 
 	mutex_lock(&my_mutex);
-	printk("this thread is %d\n",*arg);
+	/* critical section */
 	mutex_unlock(&my_mutex);
 
 	return 0;
@@ -23,7 +22,7 @@ int test_thread(void *_arg)
 void thread_create(void)
 {
 	int i;
-	// thread create
+	/* thread create */
 	for(i=0; i<10;i++){
 		int arg = i;
 		kthread_run(&test_thread,(void*)&arg,"test_thread");

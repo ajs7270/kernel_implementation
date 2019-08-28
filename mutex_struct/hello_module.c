@@ -6,7 +6,7 @@
 #include <linux/mutex.h> // for mutex 
 #include <linux/delay.h> // for delay 
 
-// struct mutex 
+/* global mutex initialize */
 typedef struct argument {
 	int value;
 	struct mutex my_mutex;
@@ -16,9 +16,8 @@ int test_thread(void *arg)
 {	
 	argument_t* argu = (argument_t*)arg;
 
-	// mutex lock & unlock 
 	mutex_lock(&argu->my_mutex);
-	printk("this thread is %d\n",argu->value);
+	/* critical section */
 	mutex_unlock(&argu->my_mutex);
 
 	return 0;
@@ -29,19 +28,21 @@ void thread_create(void)
 	argument_t arg[10];
 
 	int i;
-	// struct mutex initialize
+	/* struct mutex initialize */
 	for(i=0; i<10;i++){
 		arg[i].value = i+1;
 		mutex_init(&arg[i].my_mutex);	
 	}
 
-	// thread create
+	/* thread create */
 	for(i=0; i<10;i++){
 		kthread_run(&test_thread,(void*)&arg[i],"test_thread");
 	}
 
-	// linux doesn't have thread join function
-	// so use delay function
+	/*
+	 * linux doesn't have thread join function
+	 * so use delay function
+	 */
 	udelay(3);
 }
 

@@ -5,16 +5,15 @@
 #include <linux/slab.h> // for kmalloc
 #include <linux/spinlock.h> // for spinlock 
 
-//global spinlock initialie
+/* global spinlock initialize */
 DEFINE_SPINLOCK(my_spinlock);
 
 int test_thread(void *_arg)
 {	
 	int* arg = (int*)_arg;
 
-	// spinlock & unlock 
 	spin_lock(&my_spinlock);
-	printk("this thread is %d\n",*arg);
+	/* critical section */
 	spin_unlock(&my_spinlock);
 
 	return 0;
@@ -23,7 +22,7 @@ int test_thread(void *_arg)
 void thread_create(void)
 {
 	int i;
-	// thread create
+	/* thread create */
 	for(i=0; i<10;i++){
 		int arg = i;
 		kthread_run(&test_thread,(void*)&arg,"test_thread");
