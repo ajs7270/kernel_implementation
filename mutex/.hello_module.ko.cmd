@@ -1,1 +1,0 @@
-cmd_/home/syslab/jelee/kernel_train/mutex/hello_module.ko := ld -r -m elf_x86_64 -T ./scripts/module-common.lds --build-id  -o /home/syslab/jelee/kernel_train/mutex/hello_module.ko /home/syslab/jelee/kernel_train/mutex/hello_module.o /home/syslab/jelee/kernel_train/mutex/hello_module.mod.o ;  true
