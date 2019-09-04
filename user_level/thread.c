@@ -1,9 +1,7 @@
 /* gcc -pthread -o result thread.c */
 
-#include <pthread.h>
 #include <stdio.h>
-#include <unistd.h>
-#include <stdlib.h>
+#include <pthread.h>
 
 #define NUM_OF_THREAD 2
 
@@ -28,7 +26,7 @@ int main()
 
 		if (thr_id < 0) {
 			perror("thread create error : ");
-			exit(0);
+			return -1;
 		}
 	}
 
