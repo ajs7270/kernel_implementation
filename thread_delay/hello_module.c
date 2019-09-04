@@ -5,16 +5,11 @@
 #include <linux/slab.h> // for kmalloc
 #include <linux/delay.h>
 
-/* global spinlock initialize */
-DEFINE_SPINLOCK(my_spinlock);
-
-struct semaphore my_sem; 
 int test_thread(void *_arg)
 {	
 	int* arg = (int*)_arg;
-
 	printk("argument : %d\n", *arg);
-
+	kfree(arg);
 	return 0;
 }
 
@@ -23,8 +18,9 @@ void thread_create(void)
 	int i;
 	/* thread create */
 	for(i=0; i<10;i++){
-		int arg = i;
-		kthread_run(&test_thread,(void*)&arg,"test_thread");
+		int* arg = (int*)kmalloc(sizeof(int),GFP_KERNEL);
+		*arg = i;
+		kthread_run(&test_thread,(void*)arg,"test_thread");
 	}
 
 	/*
@@ -32,14 +28,11 @@ void thread_create(void)
          * so use delay function
          */
         udelay(10);
-
-
 }
 
 
 int __init hello_module_init(void)
 {
-	sema_init(&my_sem, 1);
 	thread_create();
 	printk(KERN_EMERG "Hello Module\n");
 	return 0;
