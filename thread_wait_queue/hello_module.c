@@ -6,37 +6,35 @@
 #include <linux/delay.h>
 #include <linux/wait.h> // for waitqueue
 
+/* static declaration */
+DECLARE_WAIT_QUEUE_HEAD(wait);
+/* define condition and set false */
+bool status = false;
+
 int test_thread(void *_arg)
 {	
 	int* arg = (int*)_arg;
-	printk("argument : %d\n", *arg);
+        udelay(100);
 	kfree(arg);
+
+	/* parent thread wake up */
+	status = true;
+	wake_up(&wait);
+	
 	return 0;
 }
 
 void thread_create(void)
 {
-	int i;
-	DECLARE_WAIT_QUEUE_HEAD(wait);
 	
 	/* thread create */
-	for(i=0; i<10;i++){
-		int* arg = (int*)kmalloc(sizeof(int),GFP_KERNEL);
-		*arg = i;
-		kthread_run(&test_thread,(void*)arg,"test_thread");
-	} 
+	int* arg = (int*)kmalloc(sizeof(int),GFP_KERNEL);
+	*arg = 10;
+	kthread_run(&test_thread,(void*)arg,"test_thread");
 
-	if(state){
-		printk("print state");
-	}
-
-	/*
-         * linux doesn't have thread join function
-         * so use delay function
-         */
-        udelay(10);
+	/* parent thread sleep */
+	wait_event_interruptible(wait,status);
 }
-
 
 int __init hello_module_init(void)
 {
