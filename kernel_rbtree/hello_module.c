@@ -9,8 +9,8 @@
 
 struct my_type {
 	struct rb_node node;
-	int key;	 /* rbtree를 정렬하기 위한 기준 */
-       	int value;
+	int key;
+	int value;
 };
 
 struct my_type *rb_search(struct rb_root *root, int key)
@@ -19,8 +19,6 @@ struct my_type *rb_search(struct rb_root *root, int key)
 
 	while (node) {
 		struct my_type *data = container_of(node, struct my_type, node);
-		
-		printk("ing : (key,value)=(%d.%d)\n", data->key,data->value); 
 
 		if(data->key > key)	
 			node = node->rb_left;
@@ -32,7 +30,7 @@ struct my_type *rb_search(struct rb_root *root, int key)
 	return NULL;
 }
 
-int my_insert(struct rb_root *root, struct my_type *data)
+int rb_insert(struct rb_root *root, struct my_type *data)
 {
 	struct rb_node **new = &(root->rb_node), *parent = NULL;
 
@@ -47,25 +45,22 @@ int my_insert(struct rb_root *root, struct my_type *data)
 		else
 			return FALSE;
 	}
-	
-	/*relinking*/
-	rb_link_node(&data->node, parent, new);
-	/*recoloring & rebalancing*/
-	rb_insert_color(&data->node, root);
+
+	rb_link_node(&data->node, parent, new); 	/*relinking*/
+	rb_insert_color(&data->node, root);	 /*recoloring & rebalancing*/
 
 	return TRUE;
-
 }
 
 
-int my_delete(struct rb_root *mytree, int key)
+int rb_delete(struct rb_root *mytree, int key)
 {
-  struct my_type *data = rb_search(mytree, key);
+	struct my_type *data = rb_search(mytree, key);
 
-  if (data) {
-        rb_erase(&data->node, mytree);
-        kfree(data);
-  }
+	if (data) {
+		rb_erase(&data->node, mytree);
+		kfree(data);
+	}
 }
 
 
@@ -73,43 +68,39 @@ void struct_exmaple(void)
 {
 	struct rb_root my_tree = RB_ROOT;
 	int i = 0, ret;
+
+	/* rb_node create and insert */
 	for(;i<20;i++){
 		struct my_type *new =kmalloc(sizeof(struct my_type),GFP_KERNEL);
 		if(!new)
 			return NULL;
-				
+
 		new->value = i*10;
 		new->key = i;
 
-		ret = my_insert(&my_tree,new);
-		printk("JE : return value = %d\n", ret);
+		ret = rb_insert(&my_tree,new);
 	}
 
+	/* rb_tree traversal using iterator */
 	struct rb_node *node; 
 	for (node = rb_first(&my_tree); node; node = rb_next(node)) 
-        	printk("(key,value)=(%d.%d)\n", rb_entry(node, struct my_type, node)->key,rb_entry(node, struct my_type, node)->value); 
+		printk("(key,value)=(%d.%d)\n", rb_entry(node, struct my_type, node)->key,rb_entry(node, struct my_type, node)->value); 
 
 
+	/* rb_tree find node */
 	struct my_type *find_node = rb_search(&my_tree,8);
 	if(!find_node){
-		printk("can't find key\n");
-		return ;
+		return NULL;
 	}	
 	printk("find : (key,value)=(%d.%d)\n", find_node->key,find_node->value); 
-	
-	my_delete(&my_tree,8);
-
-	for (node = rb_first(&my_tree); node; node = rb_next(node)) 
-        	printk("(key,value)=(%d.%d)\n", rb_entry(node, struct my_type, node)->key,rb_entry(node, struct my_type, node)->value); 
 
 
-	
-	
+	/* rb_tree delete node */
+	rb_delete(&my_tree,0);
 }
 
 int __init hello_module_init(void)
 {
-
 	struct_exmaple();
 	printk("module init\n");
 	return 0;
