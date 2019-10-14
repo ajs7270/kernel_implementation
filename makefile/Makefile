@@ -1,10 +1,14 @@
+CC = gcc
+CFLAGS = -g 
+CPPFLAGS = -std=c11 -Wall -Werror -pedantic 
+
 all : example	
 	
 example: example.o
-	gcc example.o -o example 
+	$(CC) example.o -o example 
 
 example.o: example.c
-	gcc -o example.o -c example.c
+	$(CC) $(CPPFLAGS) $(CFLAGS) -o example.o -c example.c
 	 
 clean:
 	rm -rf example.o
