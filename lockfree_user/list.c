@@ -1,7 +1,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
+#include <pthread.h>
+#include <unistd.h>
 
+#define NUM_OF_THREAD 32
 
 struct node {
 	struct node* next;
@@ -25,12 +28,13 @@ void add_tail(struct node* new, int data)
 	new->gc_next = NULL;
 	new->gc_prev = NULL;
 	new->next = NULL;
-	new->prev = __sync_val_compare_and_swap(&tail, tail, new); 
+
+	new->prev = __sync_lock_test_and_set(&tail, new);
 
 	if(new->prev ==NULL){
-		head = new;
+		__sync_lock_test_and_set(&head, new);
 	}else{
-		new->prev->next = new;
+		__sync_lock_test_and_set(&new->prev->next, new);
 	}
 }
 
@@ -41,13 +45,10 @@ void delete(struct node* selected)
 
 	// add gc list
 	selected->gc_prev = __sync_val_compare_and_swap(&gc_tail, gc_tail, selected);
-	if(selected->prev == NULL){
+	if(selected->gc_prev == NULL){
 		gc_head = selected;
 	}else{
-		if(selected->gc_prev){
-			selected->gc_prev->gc_next = selected;
-		}
-
+		selected->gc_prev->gc_next = selected;
 	}
 }
 
@@ -66,11 +67,11 @@ void delete_node(int value)
 				delete(traverse_head);
 			}
 		}
-	}while(__sync_val_compare_and_swap(&traverse_head, traverse_head, traverse_head->next));
+	}while(__sync_lock_test_and_set(&traverse_head, traverse_head->next));
 }
 
 
-void traverse()
+void *traverse()
 {
 	struct node * traverse_head = head;	
 	
@@ -83,13 +84,14 @@ void traverse()
 			//traverse
 			printf("value : %d\n", traverse_head->data);
 		}
-	}while(__sync_val_compare_and_swap(&traverse_head, traverse_head, traverse_head->next));
+	}while(__sync_lock_test_and_set(&traverse_head, traverse_head->next));
 }
 
 void free_gc_list()
 {
 	struct node * next;
 	struct node * cur;
+
 	do{	
 		if(gc_head)
 			break;
@@ -101,15 +103,53 @@ void free_gc_list()
 		cur = __sync_val_compare_and_swap(&gc_head, gc_head, gc_head->next);
 		free(cur);
 	}while(gc_head);
+
+	__sync_lock_test_and_set(&gc_tail, NULL);
 }
 
-void main() {
-	for(int i = 0; i< 10; i++){
+void* insert_thread(void * data){
+	for(int i = 0; i< 10000; i++){
 		struct node* new = (struct node*)malloc(sizeof(struct node));
-		add_tail(new, i);
+		add_tail(new,i);
 	}
 
-	traverse();
+}
+
+
+int main() {
+	pthread_t p_thread[NUM_OF_THREAD];
+	int thr_id;
+	int status;
+
+	printf("start:\n");
+	int i;
+	for(i = 0;i < NUM_OF_THREAD; i++){
+		thr_id = pthread_create(&p_thread[i],NULL,insert_thread,(void*)"child_thread");
+
+		if (thr_id < 0) {
+			perror("thread create error : ");
+			return -1;
+		}
+	}
+
+	sleep(5);
+	printf("finish:\n");
 	delete_node(5);
-	traverse();
+
+	printf("------------\n");
+	for(i = 0;i < NUM_OF_THREAD; i++){
+		thr_id = pthread_create(&p_thread[i],NULL,traverse,(void*)"child_thread");
+
+		if (thr_id < 0) {
+			perror("thread create error : ");
+			return -1;
+		}
+	}
+
+
+	sleep(5);
+	//free_gc_list();
+	printf("------------\n");
+
+	return 0;
 }
